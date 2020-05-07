@@ -1,0 +1,28 @@
+---
+
+- name: install nginx
+  vars:
+    packages:
+      - nginx
+  apt:
+    name: "{{ packages }}"
+    state: "present"
+
+- name: ensure nginx site config directory
+  file: path="{{ item }}" state=directory owner="www-data" group="www-data"
+  with_items:
+    - "/var/www/example.com/html"
+
+- name: ensure nginx index.html file
+  template: src="index.html.j2" dest="/var/www/example.com/html/index.html"
+
+- name: ensure nginx config file
+  template: src="example.com.j2" dest="/etc/nginx/sites-available/example.com"
+
+- name: enable site by creating a soft link /etc/nginx/sites-enabled
+  file:
+    src: "/etc/nginx/sites-available/example.com"
+    dest: "/etc/nginx/sites-enabled/example.com"
+    state: link
+  notify:
+    - restart nginx

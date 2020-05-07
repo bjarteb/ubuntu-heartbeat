@@ -1,0 +1,3 @@
+---
+
+heartbeat_partner_ip: "{{ groups['loadbalancers'] | map('extract', hostvars, 'ansible_host') | difference([ansible_host]) | join('') }}"

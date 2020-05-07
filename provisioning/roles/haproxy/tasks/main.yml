@@ -1,0 +1,20 @@
+---
+
+- name: install haproxy
+  vars:
+    packages:
+      - haproxy
+  apt:
+    name: "{{ packages }}"
+    state: "present"
+
+- name: ensure haproxy config file
+  template: src="haproxy.cfg.j2" dest=/etc/haproxy/haproxy.cfg mode=0644
+  notify:
+    - restart haproxy
+
+- name: restart service haproxy, in all cases, also issue daemon-reload to pick up config changes
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: haproxy

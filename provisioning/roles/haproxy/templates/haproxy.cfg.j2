@@ -1,0 +1,33 @@
+global
+  log /dev/log  local0
+  log /dev/log  local1 notice
+  chroot /var/lib/haproxy
+  user haproxy
+  group haproxy
+  daemon
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    option  dontlognull
+    timeout connect 5s
+    timeout client 50s
+    timeout client-fin 50s
+    timeout server 50s
+    timeout tunnel 1h
+
+listen stats
+    bind *:1080
+    stats refresh 30s
+    stats uri /stats
+
+listen nginx-server
+    bind {{ haproxy_virtual_ip }}:{{ haproxy_port }}
+    mode tcp
+    option tcplog
+    balance roundrobin
+
+{% for i in range(haproxy_nginx_ips | length) %}
+    server nginx-{{i+1}} {{ haproxy_nginx_ips[i] }}:80 check
+{% endfor %}

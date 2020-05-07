@@ -1,0 +1,7 @@
+---
+
+listening_virtual_ip: "10.0.10.10"
+listening_port: "8080"
+advertise_interface: "{{ ansible_enp0s8.device }}"
+advertise_address: "{{ ansible_enp0s8.ipv4.address }}"
+masters: "{{ groups['masters'] }}"

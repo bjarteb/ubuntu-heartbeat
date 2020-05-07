@@ -1,0 +1,77 @@
+---
+
+- hosts: all
+  tasks:
+    - name: install python
+      raw: test -e /usr/bin/python3 || (apt update && apt install -y python3-minimal)
+      register: test
+      changed_when: test.stdout | bool
+
+    - name: install initial packages
+      vars:
+        packages:
+          - apt-transport-https
+          - ca-certificates
+          - software-properties-common
+      apt:
+        name: "{{ packages }}"
+        state: "present"
+        update_cache: true
+
+    - name: install packages
+      vars:
+        packages:
+          - jq
+          - htop
+          - traceroute
+          - iftop
+          - python3-pip
+      apt:
+        name: "{{ packages }}"
+        state: "present"
+        update_cache: true
+
+    - name: remove default host lookup
+      lineinfile:
+        path: "/etc/hosts"
+        regexp: "127.0.1.1.*"
+        state: "absent"
+
+    - name: configure kernel params
+      sysctl:
+        name: "{{ item }}"
+        value: "1"
+        sysctl_set: yes
+        state: present
+        reload: yes
+      loop:
+        - net.ipv4.ip_nonlocal_bind
+        - net.ipv4.ip_forward
+
+    - name: Remove swapfile from /etc/fstab
+      mount:
+        name: swap
+        fstype: swap
+        state: absent
+
+    - name: Disable swap
+      shell: swapoff -a
+      when: ansible_swaptotal_mb > 0
+
+    - name: install haproxy
+      tags:
+        - haproxy
+      import_role:
+        name: "haproxy"
+
+    - name: install heartbeat
+      tags:
+        - heartbeat
+      import_role:
+        name: "heartbeat"
+
+    - name: install nginx
+      tags:
+        - nginx
+      import_role:
+        name: "nginx"
